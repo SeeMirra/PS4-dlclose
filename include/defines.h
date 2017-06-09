@@ -6,7 +6,7 @@
 			sceNetSend(sock, buffer, size, 0);\
 		} while(0)
 	
-	#define sys_sendto (void *)0xffffffff8249ec10
+	#define sys_sendto (void *)0xFFFFFFFF82501AC0
 	
 	/*
 	#define printfkernel(f, ...) \
@@ -18,9 +18,9 @@
 		} while(0)
 	*/
 	
-	int (*printfkernel)(const char *fmt, ...) = (void *)0xFFFFFFFF8246E340;
+	int (*printfkernel)(const char *fmt, ...) = (void *)0xFFFFFFFF824D19A0;
 #else
-	int (*printfkernel)(const char *fmt, ...) = (void *)0xFFFFFFFF8246E340;
+	int (*printfkernel)(const char *fmt, ...) = (void *)0xFFFFFFFF824D19A0;
 #endif
 
 #define	SLIST_ENTRY(type)						\
@@ -198,4 +198,3 @@ static inline __attribute__((always_inline)) void writeCr0(uint64_t cr0) {
 		: "memory"
 	);
 }
-
